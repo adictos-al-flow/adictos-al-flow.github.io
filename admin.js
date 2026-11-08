@@ -105,10 +105,10 @@
   const logoutBtn = document.getElementById("admLogout");
 
   function counts() {
-    const c = { ropa: 0, zapatillas: 0, accesorios: 0 };
+    const c = { ropa: 0, zapatillas: 0, accesorios: 0, cadenas: 0, relojes: 0, drip: 0 };
     PRODUCTS.forEach((p) => c[p.cat]++);
     const photos = new Set(PRODUCTS.flatMap((p) => p.img)).size;
-    return c.ropa + " ropa · " + c.zapatillas + " zapatillas · " + c.accesorios + " accesorios · " + photos + " fotos";
+    return c.ropa + " ropa · " + c.zapatillas + " zapatillas · " + c.accesorios + " accesorios · " + c.cadenas + " cadenas · " + c.relojes + " relojes · " + c.drip + " drip · " + photos + " fotos";
   }
 
   function setStatus(message, type) {
