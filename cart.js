@@ -21,6 +21,7 @@
             <span>Total <small id="cartPieces"></small></span>
             <strong id="cartTotal">RD$0</strong>
           </div>
+          <div class="cart-min" id="cartMin"></div>
           <p class="cart-note">Pedido mínimo de 3 productos · Entrega en República Dominicana</p>
           <button class="cart-checkout" id="cartCheckout" type="button">Pedir todo por WhatsApp</button>
           <button class="cart-clear" id="cartClear" type="button">Vaciar carrito</button>
@@ -34,6 +35,7 @@
   const list = document.getElementById("cartList");
   const totalEl = document.getElementById("cartTotal");
   const piecesEl = document.getElementById("cartPieces");
+  const minEl = document.getElementById("cartMin");
   const checkoutBtn = document.getElementById("cartCheckout");
   const clearBtn = document.getElementById("cartClear");
   const closeBtn = document.getElementById("cartClose");
@@ -104,6 +106,12 @@
 
     badge.textContent = total.qty > 99 ? "99+" : String(total.qty);
     badge.hidden = total.qty === 0;
+
+    const bnBadge = document.getElementById("bnCartBadge");
+    if (bnBadge) {
+      bnBadge.textContent = badge.textContent;
+      bnBadge.hidden = badge.hidden;
+    }
     cartBtn.setAttribute(
       "aria-label",
       total.qty
@@ -146,6 +154,23 @@
 
     totalEl.textContent = money(total.dop);
     piecesEl.textContent = total.qty ? "· " + total.qty + (total.qty === 1 ? " pieza" : " piezas") : "";
+
+    const MIN_ORDER = 3;
+    const remaining = Math.max(0, MIN_ORDER - total.qty);
+    if (minEl) {
+      if (!total.qty) {
+        minEl.textContent = "";
+        minEl.classList.remove("ok");
+      } else if (remaining > 0) {
+        minEl.textContent =
+          "Te faltan " + remaining + (remaining === 1 ? " pieza" : " piezas") + " para el pedido mínimo";
+        minEl.classList.remove("ok");
+      } else {
+        minEl.textContent = "Cumples el pedido mínimo de " + MIN_ORDER + " piezas";
+        minEl.classList.add("ok");
+      }
+    }
+
     checkoutBtn.disabled = !items.length;
     clearBtn.hidden = !items.length;
   }

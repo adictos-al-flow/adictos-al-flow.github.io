@@ -45,6 +45,9 @@ const CAT_LABELS = {
   ropa: "Ropa",
   zapatillas: "Zapatillas",
   accesorios: "Accesorios",
+  cadenas: "Cadenas",
+  relojes: "Relojes de Gala",
+  drip: "Drip",
 };
 
 const grid = document.getElementById("grid");
@@ -68,6 +71,13 @@ const sizesBox = document.getElementById("sizes");
 const addCartBtn = document.getElementById("addCartBtn");
 const orderBtn = document.getElementById("orderBtn");
 const toastEl = document.getElementById("toast");
+const searchInput = document.getElementById("searchInput");
+const searchClear = document.getElementById("searchClear");
+const gridMore = document.getElementById("gridMore");
+const loadMoreBtn = document.getElementById("loadMoreBtn");
+const waFloat = document.getElementById("waFloat");
+
+const PAGE_SIZE = 24;
 
 let currentCat = "ropa";
 let currentProduct = null;
@@ -77,6 +87,8 @@ let selectedSize = null;
 let currentCurrency = "DOP";
 let toastTimer = null;
 let lastFocused = null;
+let searchTerm = "";
+let visibleCount = PAGE_SIZE;
 
 try {
   const saved = localStorage.getItem("aaf-currency");
@@ -106,6 +118,20 @@ function applyStoreSettings() {
   document.body.classList.toggle("no-strip", !show);
   strip.style.display = show ? "" : "none";
   if (show) strip.textContent = CONFIG.stripText;
+  updateWaFloat();
+}
+
+function updateWaFloat() {
+  if (!waFloat) return;
+  const number = String(CONFIG.whatsappNumber || "").replace(/\D/g, "");
+  if (!number) {
+    waFloat.hidden = true;
+    return;
+  }
+  waFloat.hidden = false;
+  waFloat.href =
+    "https://wa.me/" + number + "?text=" +
+    encodeURIComponent("Hola, vengo de la página de Adictos al Flow. Quiero hacer un pedido.");
 }
 
 function refreshStore() {
@@ -130,10 +156,25 @@ function setCurrency(code) {
   if (window.CART) window.CART.render();
 }
 
-function renderGrid() {
-  const list = PRODUCTS.filter((p) => p.cat === currentCat);
+function currentList() {
+  const term = searchTerm.trim().toLowerCase();
+  if (term) {
+    return PRODUCTS.filter((p) =>
+      (p.name + " " + p.desc + " " + p.cat).toLowerCase().includes(term)
+    );
+  }
+  return PRODUCTS.filter((p) => p.cat === currentCat);
+}
 
-  if (currentCat === "ropa") {
+function renderGrid() {
+  const list = currentList();
+  const searching = searchTerm.trim() !== "";
+
+  if (searching) {
+    sectionHead.hidden = false;
+    sectionTitle.textContent = "RESULTADOS";
+    sectionCount.textContent = list.length + (list.length === 1 ? " MODELO" : " MODELOS");
+  } else if (currentCat === "ropa") {
     sectionHead.hidden = true;
   } else {
     sectionHead.hidden = false;
@@ -142,14 +183,20 @@ function renderGrid() {
   }
 
   empty.hidden = list.length > 0;
+  empty.textContent = searching
+    ? "No encontramos productos para «" + searchTerm.trim() + "»."
+    : "No hay productos en esta categoría todavía.";
 
-  grid.innerHTML = list
+  const visible = list.slice(0, visibleCount);
+
+  grid.innerHTML = visible
     .map((p, i) => {
       const fav = window.ACCOUNTS ? window.ACCOUNTS.isFav(p.id) : false;
       return `
       <article class="card" style="animation-delay:${(i % 8) * 35}ms">
         <div class="card-img">
           <img src="${p.img[0]}" alt="${esc(p.name)}" width="650" height="650" loading="lazy" decoding="async">
+          <span class="card-tag">Envío gratis</span>
           <button class="fav-btn${fav ? " active" : ""}" type="button" data-id="${esc(p.id)}" aria-pressed="${fav}" aria-label="Guardar en favoritos">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.4S4.8 15.9 3 11.7A5.2 5.2 0 0 1 12 6.4a5.2 5.2 0 0 1 9 5.3c-1.8 4.2-9 8.7-9 8.7z"/></svg>
           </button>
@@ -162,15 +209,34 @@ function renderGrid() {
       </article>`;
     })
     .join("");
+
+  const remaining = list.length - visible.length;
+  if (gridMore && loadMoreBtn) {
+    gridMore.hidden = remaining <= 0;
+    if (remaining > 0) {
+      loadMoreBtn.textContent = "Ver más productos (" + remaining + ")";
+    }
+  }
 }
 
 function pickCategory(cat) {
   currentCat = cat;
+  searchTerm = "";
+  visibleCount = PAGE_SIZE;
+  if (searchInput) searchInput.value = "";
+  if (searchClear) searchClear.hidden = true;
   document.querySelectorAll(".cat-btn").forEach((b) => {
     b.classList.toggle("active", b.dataset.cat === cat);
   });
   renderGrid();
   window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function setSearch(value) {
+  searchTerm = value;
+  visibleCount = PAGE_SIZE;
+  if (searchClear) searchClear.hidden = searchTerm.trim() === "";
+  renderGrid();
 }
 
 function showSlide(index) {
@@ -313,6 +379,78 @@ document.querySelectorAll("[data-hero-cat]").forEach((btn) => {
   btn.addEventListener("click", () => pickCategory(btn.dataset.heroCat));
 });
 
+let searchTimer = null;
+if (searchInput) {
+  searchInput.addEventListener("input", () => {
+    const value = searchInput.value;
+    if (searchClear) searchClear.hidden = value.trim() === "";
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => setSearch(value), 150);
+  });
+
+  searchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      searchInput.value = "";
+      setSearch("");
+      searchInput.blur();
+    }
+  });
+}
+
+if (searchClear) {
+  searchClear.addEventListener("click", () => {
+    if (searchInput) searchInput.value = "";
+    setSearch("");
+    if (searchInput) searchInput.focus();
+  });
+}
+
+if (loadMoreBtn) {
+  loadMoreBtn.addEventListener("click", () => {
+    visibleCount += PAGE_SIZE;
+    renderGrid();
+  });
+}
+
+document.querySelectorAll(".cat-tile").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    pickCategory(btn.dataset.cat);
+    const nav = document.querySelector(".cat-nav");
+    if (nav) nav.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+});
+
+const bottomNav = document.querySelector(".bottom-nav");
+if (bottomNav) {
+  bottomNav.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-nav]");
+    if (!btn) return;
+    const action = btn.dataset.nav;
+
+    bottomNav.querySelectorAll("button[data-nav]").forEach((b) => {
+      b.classList.toggle("active", b === btn);
+    });
+
+    if (action === "home") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (action === "cats") {
+      const nav = document.querySelector(".cat-nav");
+      if (nav) nav.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else if (action === "search") {
+      if (searchInput) {
+        searchInput.focus();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    } else if (action === "cart") {
+      const cartBtn = document.getElementById("cartBtn");
+      if (cartBtn) cartBtn.click();
+    } else if (action === "account") {
+      const accountBtn = document.getElementById("accountBtn");
+      if (accountBtn) accountBtn.click();
+    }
+  });
+}
+
 grid.addEventListener("click", (e) => {
   const btn = e.target.closest(".btn-view");
   if (btn) openModal(btn.dataset.id);
@@ -364,6 +502,11 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowLeft" && currentImages.length > 1) showSlide(slideIdx - 1);
   if (e.key === "ArrowRight" && currentImages.length > 1) showSlide(slideIdx + 1);
 });
+
+// Utilidades compartidas con cart.js y accounts.js
+window.showToast = showToast;
+window.formatPrice = formatPrice;
+window.openModal = openModal;
 
 window.STORE = {
   config: CONFIG,
