@@ -1082,6 +1082,33 @@ body.modal-open {
   opacity: 1;
 }
 
+/* Sobre la tienda */
+.about {
+  width: min(100% - 32px, 880px);
+  margin: 44px auto 0;
+  padding: 26px 24px;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 18px;
+}
+
+.about h2 {
+  margin: 0 0 12px;
+  font-size: 19px;
+  line-height: 1.25;
+}
+
+.about p {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+
+.about p:last-child {
+  margin-bottom: 0;
+}
+
 /* Footer */
 .footer {
   margin-top: 40px;
