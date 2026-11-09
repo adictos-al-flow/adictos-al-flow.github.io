@@ -1,0 +1,7 @@
+name = "adictos-al-flow-pay"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+[vars]
+SITE_URL = "https://adictos-al-flow.github.io"
+CATALOG_URL = "https://adictos-al-flow.github.io/products.js"

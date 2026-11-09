@@ -23,6 +23,7 @@
           </div>
           <div class="cart-min" id="cartMin"></div>
           <p class="cart-note">Pedido mínimo de 3 productos · Entrega en República Dominicana</p>
+          <button class="cart-pay" id="cartPay" type="button" hidden>Pagar con tarjeta</button>
           <button class="cart-checkout" id="cartCheckout" type="button">Pedir todo por WhatsApp</button>
           <button class="cart-clear" id="cartClear" type="button">Vaciar carrito</button>
         </div>
@@ -37,6 +38,7 @@
   const piecesEl = document.getElementById("cartPieces");
   const minEl = document.getElementById("cartMin");
   const checkoutBtn = document.getElementById("cartCheckout");
+  const payBtn = document.getElementById("cartPay");
   const clearBtn = document.getElementById("cartClear");
   const closeBtn = document.getElementById("cartClose");
   const cartBtn = document.getElementById("cartBtn");
@@ -83,6 +85,10 @@
 
   function moneyDop(value) {
     return "RD$" + Number(value || 0).toLocaleString("en-US");
+  }
+
+  function storeConfig() {
+    return (window.STORE && window.STORE.config) || {};
   }
 
   function totals() {
@@ -173,6 +179,10 @@
 
     checkoutBtn.disabled = !items.length;
     clearBtn.hidden = !items.length;
+
+    payBtn.hidden = !storeConfig().payApiUrl || !items.length;
+    payBtn.disabled = !items.length;
+    payBtn.textContent = "Pagar con tarjeta · " + moneyDop(total.dop);
   }
 
   function open() {
@@ -235,7 +245,7 @@
 
   function checkout() {
     if (!items.length) return;
-    const config = (window.STORE && window.STORE.config) || {};
+    const config = storeConfig();
     if (!config.whatsappNumber) {
       if (typeof window.showToast === "function") window.showToast("Falta configurar el WhatsApp de la tienda");
       return;
@@ -276,6 +286,40 @@
     close();
   }
 
+  async function pay() {
+    if (!items.length) return;
+    const config = storeConfig();
+    if (!config.payApiUrl) return;
+
+    const total = totals();
+    if (total.qty < 3) {
+      if (typeof window.showToast === "function") window.showToast("Pedido mínimo de 3 piezas");
+      return;
+    }
+
+    payBtn.disabled = true;
+    payBtn.textContent = "Redirigiendo al pago…";
+
+    try {
+      const response = await fetch(config.payApiUrl.replace(/\/$/, "") + "/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map((it) => ({ id: it.id, size: it.size, qty: it.qty })),
+        }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data || !data.url) throw new Error("checkout_failed");
+      window.location.href = data.url;
+    } catch (e) {
+      payBtn.disabled = false;
+      payBtn.textContent = "Pagar con tarjeta · " + moneyDop(total.dop);
+      if (typeof window.showToast === "function") {
+        window.showToast("No se pudo iniciar el pago. Intenta de nuevo o pide por WhatsApp.");
+      }
+    }
+  }
+
   cartBtn.addEventListener("click", open);
   closeBtn.addEventListener("click", close);
   panel.addEventListener("click", (e) => {
@@ -300,6 +344,7 @@
   });
 
   checkoutBtn.addEventListener("click", checkout);
+  payBtn.addEventListener("click", pay);
   clearBtn.addEventListener("click", clear);
 
   document.addEventListener("keydown", (e) => {
@@ -307,6 +352,33 @@
     e.stopImmediatePropagation();
     close();
   });
+
+  function handlePaymentReturn() {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("pago");
+    if (status !== "exito" && status !== "cancelado") return;
+
+    if (status === "exito") {
+      items = [];
+      persist();
+      if (typeof window.showToast === "function") {
+        window.showToast("Pago recibido. Te escribimos por WhatsApp para coordinar la entrega.");
+      }
+    } else if (typeof window.showToast === "function") {
+      window.showToast("Pago cancelado. Tu carrito sigue guardado.");
+    }
+
+    params.delete("pago");
+    params.delete("session_id");
+    const query = params.toString();
+    try {
+      window.history.replaceState(
+        null,
+        "",
+        window.location.pathname + (query ? "?" + query : "") + window.location.hash
+      );
+    } catch (e) {}
+  }
 
   window.CART = {
     add,
@@ -317,5 +389,6 @@
     },
   };
 
+  handlePaymentReturn();
   render();
 })();

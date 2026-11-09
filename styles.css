@@ -2038,6 +2038,29 @@ body.cart-open {
   font-size: 10.5px;
 }
 
+.cart-pay {
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px;
+  background: var(--black);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background .18s ease;
+}
+
+.cart-pay:hover {
+  background: #000;
+}
+
+.cart-pay:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
 .cart-checkout {
   width: 100%;
   margin-top: 12px;

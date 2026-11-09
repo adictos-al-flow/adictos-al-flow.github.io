@@ -6,5 +6,6 @@ window.STORE_CONFIG = {
   eurRate: 65,
   stripText: "PEDIDO MÍNIMO DE 3 PRODUCTOS O MÁS",
   stripEnabled: true,
+  payApiUrl: "",
   version: 1,
 };
