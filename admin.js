@@ -30,17 +30,19 @@
 
         <div class="admin-static" id="adminStatic" hidden>
           <p class="admin-login-sub">Esta copia de la tienda es estática (GitHub Pages).</p>
-          <p class="admin-static-text">El panel de administración necesita el servidor seguro. Publica el proyecto con <strong>render.yaml</strong> para cambiar el WhatsApp, las tasas y la franja para todos tus clientes.</p>
+          <p class="admin-static-text">El panel de administración necesita el servidor seguro. Publica el proyecto con <strong>render.yaml</strong> para cambiar el correo de PayPal, el pedido mínimo, las tasas y la franja para todos tus clientes.</p>
           <p class="admin-static-text">Aquí los cambios no se pueden publicar.</p>
           <button class="admin-btn primary" id="adminStaticClose" type="button">Entendido</button>
         </div>
 
         <div class="admin-body" id="adminBody" hidden>
           <section class="admin-sec">
-            <h3>WhatsApp</h3>
-            <label class="admin-label" for="admWa">Número con código de país</label>
-            <input class="admin-input" id="admWa" type="tel" inputmode="numeric" placeholder="18091234567" autocomplete="off">
-            <p class="admin-hint">Sin +, espacios ni guiones. Si lo dejas vacío, el botón de pedido mostrará un aviso.</p>
+            <h3>Pagos</h3>
+            <label class="admin-label" for="admPaypal">Correo de PayPal (recibe el dinero)</label>
+            <input class="admin-input" id="admPaypal" type="email" placeholder="tucorreo@ejemplo.com" autocomplete="off">
+            <label class="admin-label" for="admMin">Pedido mínimo (RD$)</label>
+            <input class="admin-input" id="admMin" type="number" min="0" step="50">
+            <p class="admin-hint">El carrito debe sumar al menos este monto para poder pagar. Los pagos se hacen en la página con PayPal o tarjeta.</p>
           </section>
 
           <section class="admin-sec">
@@ -94,7 +96,8 @@
   const loginMsg = document.getElementById("adminLoginMsg");
   const emailInput = document.getElementById("admEmail");
   const passInput = document.getElementById("admPass");
-  const waInput = document.getElementById("admWa");
+  const paypalInput = document.getElementById("admPaypal");
+  const minInput = document.getElementById("admMin");
   const usdInput = document.getElementById("admUsd");
   const eurInput = document.getElementById("admEur");
   const stripOn = document.getElementById("admStripOn");
@@ -122,7 +125,8 @@
   }
 
   function fillForm() {
-    waInput.value = STORE.config.whatsappNumber || "";
+    paypalInput.value = STORE.config.paypalEmail || "";
+    minInput.value = Number(STORE.config.minOrderDop) > 0 ? STORE.config.minOrderDop : 1000;
     usdInput.value = STORE.config.usdRate;
     eurInput.value = STORE.config.eurRate;
     stripOn.checked = STORE.config.stripEnabled !== false;
@@ -257,14 +261,20 @@
   }
 
   function validateForm() {
-    const wa = waInput.value.replace(/\D/g, "").slice(0, 15);
+    const paypal = paypalInput.value.trim();
+    const min = Number(minInput.value);
     const usd = Number(usdInput.value);
     const eur = Number(eurInput.value);
     const text = stripText.value.trim();
 
-    if (wa && (wa.length < 8 || wa.length > 15)) {
-      setStatus("El número de WhatsApp debe tener entre 8 y 15 dígitos, con código de país.", "err");
-      waInput.focus();
+    if (paypal && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(paypal)) {
+      setStatus("Escribe un correo de PayPal válido.", "err");
+      paypalInput.focus();
+      return null;
+    }
+    if (!(min >= 0)) {
+      setStatus("El pedido mínimo debe ser un monto válido (0 o más).", "err");
+      minInput.focus();
       return null;
     }
     if (!(usd > 0)) {
@@ -283,7 +293,7 @@
       return null;
     }
 
-    return { whatsappNumber: wa, usdRate: usd, eurRate: eur, stripText: text, stripEnabled: stripOn.checked };
+    return { paypalEmail: paypal, minOrderDop: min, usdRate: usd, eurRate: eur, stripText: text, stripEnabled: stripOn.checked };
   }
 
   async function saveForm() {
@@ -313,7 +323,6 @@
 
     STORE.apply(res.data.config);
     STORE.clearLocal();
-    waInput.value = next.whatsappNumber;
     setStatus("Guardado en el servidor. Tus clientes ya ven los cambios.", "ok");
   }
 

@@ -1,10 +1,12 @@
 const DEFAULT_CONFIG = {
-  whatsappNumber: "",
   usdRate: 60,
   eurRate: 65,
-  stripText: "PEDIDO MÍNIMO DE 3 PRODUCTOS O MÁS",
+  stripText: "PEDIDO MÍNIMO DE RD$1,000 · ENVÍO GRATIS",
   stripEnabled: true,
   payApiUrl: "",
+  paypalEmail: "",
+  googleClientId: "",
+  minOrderDop: 1000,
 };
 
 const FILE_CONFIG = Object.assign({}, DEFAULT_CONFIG, window.STORE_CONFIG || {});
@@ -19,11 +21,13 @@ try {
 
 const LOCAL_ACTIVE = !window.STORE_SERVER && !!(localConfig && Number(localConfig.basedOn) === FILE_VERSION);
 if (LOCAL_ACTIVE) {
-  if (typeof localConfig.whatsappNumber === "string") CONFIG.whatsappNumber = localConfig.whatsappNumber;
   if (Number(localConfig.usdRate) > 0) CONFIG.usdRate = Number(localConfig.usdRate);
   if (Number(localConfig.eurRate) > 0) CONFIG.eurRate = Number(localConfig.eurRate);
   if (typeof localConfig.stripText === "string") CONFIG.stripText = localConfig.stripText;
   if (typeof localConfig.stripEnabled === "boolean") CONFIG.stripEnabled = localConfig.stripEnabled;
+  if (typeof localConfig.paypalEmail === "string") CONFIG.paypalEmail = localConfig.paypalEmail;
+  if (typeof localConfig.googleClientId === "string") CONFIG.googleClientId = localConfig.googleClientId;
+  if (Number(localConfig.minOrderDop) > 0) CONFIG.minOrderDop = Number(localConfig.minOrderDop);
 } else {
   try {
     localStorage.removeItem("aaf-config");
@@ -70,13 +74,11 @@ const mPrice = document.getElementById("mPrice");
 const mDesc = document.getElementById("mDesc");
 const sizesBox = document.getElementById("sizes");
 const addCartBtn = document.getElementById("addCartBtn");
-const orderBtn = document.getElementById("orderBtn");
 const toastEl = document.getElementById("toast");
 const searchInput = document.getElementById("searchInput");
 const searchClear = document.getElementById("searchClear");
 const gridMore = document.getElementById("gridMore");
 const loadMoreBtn = document.getElementById("loadMoreBtn");
-const waFloat = document.getElementById("waFloat");
 
 const PAGE_SIZE = 24;
 
@@ -113,26 +115,27 @@ function formatPrice(value) {
   return currency.symbol + Math.round(value * rateOf(currentCurrency)).toLocaleString("en-US");
 }
 
+function minOrderDop() {
+  const min = Number(CONFIG.minOrderDop);
+  return min > 0 ? min : 1000;
+}
+
 function applyStoreSettings() {
   const strip = document.querySelector(".top-strip");
   const show = CONFIG.stripEnabled !== false && String(CONFIG.stripText || "").trim() !== "";
   document.body.classList.toggle("no-strip", !show);
   strip.style.display = show ? "" : "none";
   if (show) strip.textContent = CONFIG.stripText;
-  updateWaFloat();
-}
 
-function updateWaFloat() {
-  if (!waFloat) return;
-  const number = String(CONFIG.whatsappNumber || "").replace(/\D/g, "");
-  if (!number) {
-    waFloat.hidden = true;
-    return;
-  }
-  waFloat.hidden = false;
-  waFloat.href =
-    "https://wa.me/" + number + "?text=" +
-    encodeURIComponent("Hola, vengo de la página de Adictos al Flow. Quiero hacer un pedido.");
+  const minLabel = formatDop(minOrderDop());
+  const heroMin = document.getElementById("heroMin");
+  const heroBadge = document.getElementById("heroBadge");
+  const perkMin = document.getElementById("perkMin");
+  const mNote = document.getElementById("mNote");
+  if (heroMin) heroMin.textContent = "Pedido mínimo de " + minLabel;
+  if (heroBadge) heroBadge.innerHTML = "MÍN.<br>" + minLabel;
+  if (perkMin) perkMin.textContent = "Pedido mínimo " + minLabel;
+  if (mNote) mNote.textContent = "Pedido mínimo de " + minLabel + " · Envío gratis a República Dominicana";
 }
 
 function refreshStore() {
@@ -314,34 +317,6 @@ function pickSize(btn) {
   selectedSize = btn.dataset.size;
 }
 
-function buildWhatsappUrl(product, size) {
-  const lines = [
-    "Hola, vengo de la página de Adictos al Flow.",
-    "Quiero pedir:",
-    "• " + product.name + " — Talla " + size,
-    "Precio: " + formatDop(product.price),
-    "",
-    "¿Está disponible?",
-  ];
-  return "https://wa.me/" + CONFIG.whatsappNumber + "?text=" + encodeURIComponent(lines.join("\n"));
-}
-
-function orderWhatsapp() {
-  if (!currentProduct) return;
-
-  if (!selectedSize) {
-    showToast("Elige una talla primero");
-    return;
-  }
-
-  if (!CONFIG.whatsappNumber) {
-    showToast("Falta configurar el WhatsApp de la tienda");
-    return;
-  }
-
-  window.open(buildWhatsappUrl(currentProduct, selectedSize), "_blank", "noopener");
-}
-
 function addToCart() {
   if (!currentProduct) return;
 
@@ -491,7 +466,6 @@ document.addEventListener("click", () => {
 
 modalClose.addEventListener("click", closeModal);
 addCartBtn.addEventListener("click", addToCart);
-orderBtn.addEventListener("click", orderWhatsapp);
 
 modal.addEventListener("click", (e) => {
   if (e.target === modal) closeModal();
@@ -534,11 +508,13 @@ window.STORE = {
   },
   buildConfigSource() {
     const data = {
-      whatsappNumber: CONFIG.whatsappNumber,
       usdRate: CONFIG.usdRate,
       eurRate: CONFIG.eurRate,
       stripText: CONFIG.stripText,
       stripEnabled: CONFIG.stripEnabled,
+      paypalEmail: CONFIG.paypalEmail,
+      googleClientId: CONFIG.googleClientId,
+      minOrderDop: CONFIG.minOrderDop,
       version: Date.now(),
     };
     return (
