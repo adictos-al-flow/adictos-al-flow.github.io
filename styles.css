@@ -2774,7 +2774,7 @@ body.no-strip .site-header {
 /* Categorías rápidas */
 .quick-cats {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   max-width: 1280px;
   margin: 14px auto 0;
@@ -4021,8 +4021,7 @@ body.gate-open {
   border-radius: 50%;
 }
 
-.co-pm-badge,
-.paycard-brand {
+.co-pm-badge {
   display: grid;
   flex: none;
   place-items: center;
@@ -4041,25 +4040,16 @@ body.gate-open {
   font-style: italic;
 }
 
-.paycard-brand {
-  font-size: 9.5px;
-  text-transform: uppercase;
+.co-pm-badge.bankcard {
+  background: linear-gradient(135deg, #3a3f47, #14181d);
 }
 
-.paycard-brand.visa {
-  background: linear-gradient(135deg, #1a1f71, #2e3a9e);
-}
-
-.paycard-brand.mastercard {
-  background: linear-gradient(135deg, #eb001b, #f79e1b);
-}
-
-.paycard-brand.amex {
-  background: linear-gradient(135deg, #2e77bc, #1b4f8a);
-}
-
-.paycard-brand.other {
-  background: linear-gradient(135deg, #555, #222);
+.co-pm-badge svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 1.8;
 }
 
 .co-pm-txt {
@@ -4080,33 +4070,11 @@ body.gate-open {
   font-size: 10.5px;
 }
 
-.co-manage {
-  align-self: flex-start;
-  padding: 2px 0;
-  background: none;
-  border: none;
-  color: #b80000;
-  font-size: 11.5px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.co-manage:hover {
-  text-decoration: underline;
-}
-
-.co-cardnote {
+.co-payment-note {
   margin: 0;
-  padding: 9px 11px;
-  background: #fff8e6;
-  border-radius: 9px;
-  color: #7a5b00;
+  color: #666;
   font-size: 11px;
-  line-height: 1.45;
-}
-
-.co-cardnote[hidden] {
-  display: none;
+  line-height: 1.5;
 }
 
 .co-summary {
@@ -4573,12 +4541,6 @@ body.gate-open {
   display: none;
 }
 
-.acct-grid2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
 .ord-list {
   display: flex;
   flex-direction: column;
@@ -4713,51 +4675,13 @@ body.gate-open {
   text-decoration: underline;
 }
 
-.paycard-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.paycard {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  border: 1px solid #f0f0f0;
-  border-radius: 11px;
-}
-
-.paycard-info {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.paycard-info strong {
-  overflow: hidden;
-  font-size: 12px;
-  font-weight: 800;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.paycard-info small {
-  color: #8a8a8a;
-  font-size: 10.5px;
-}
-
 /* Scrollbars con el lenguaje visual de la tienda */
 .cart-body,
 .co-body,
 .confirm-body,
 .acct-box,
 .fav-list,
-.ord-list,
-.paycard-list {
+.ord-list {
   scrollbar-width: thin;
   scrollbar-color: #e10600 #f2f3f5;
 }
@@ -4767,8 +4691,7 @@ body.gate-open {
 .confirm-body::-webkit-scrollbar,
 .acct-box::-webkit-scrollbar,
 .fav-list::-webkit-scrollbar,
-.ord-list::-webkit-scrollbar,
-.paycard-list::-webkit-scrollbar {
+.ord-list::-webkit-scrollbar {
   width: 8px;
 }
 
@@ -4787,7 +4710,6 @@ body.gate-open {
 .acct-box::-webkit-scrollbar-track,
 .fav-list::-webkit-scrollbar-track,
 .ord-list::-webkit-scrollbar-track,
-.paycard-list::-webkit-scrollbar-track,
 .reco-row::-webkit-scrollbar-track {
   background: #f2f3f5;
   border-radius: 999px;
@@ -4799,7 +4721,6 @@ body.gate-open {
 .acct-box::-webkit-scrollbar-thumb,
 .fav-list::-webkit-scrollbar-thumb,
 .ord-list::-webkit-scrollbar-thumb,
-.paycard-list::-webkit-scrollbar-thumb,
 .reco-row::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #ff2d20, #b80000);
   border: 2px solid #f2f3f5;
@@ -4816,7 +4737,6 @@ body.gate-open {
 .acct-box::-webkit-scrollbar-thumb:hover,
 .fav-list::-webkit-scrollbar-thumb:hover,
 .ord-list::-webkit-scrollbar-thumb:hover,
-.paycard-list::-webkit-scrollbar-thumb:hover,
 .reco-row::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, #ff5a4f, #d00000);
 }
@@ -4833,5 +4753,129 @@ body.gate-open {
   .confirm-body {
     padding-left: 16px;
     padding-right: 16px;
+  }
+}
+
+.modal.preview .m-label,
+.modal.preview .sizes {
+  display: none;
+}
+
+.btn-cart:disabled {
+  opacity: .65;
+  cursor: not-allowed;
+}
+
+.cart-fab {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 1040;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  background: linear-gradient(145deg, #ff2d20, #b80000);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(225, 6, 0, .38), 0 3px 8px rgba(0, 0, 0, .18);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.cart-fab svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cart-fab:focus-visible {
+  outline: 3px solid #1c1c1c;
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cart-fab,
+  .cart-fab.bump {
+    animation: none;
+    transition: none;
+  }
+}
+
+.cart-fab:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 14px 30px rgba(225, 6, 0, .46), 0 4px 10px rgba(0, 0, 0, .2);
+}
+
+.cart-fab:active {
+  transform: scale(.94);
+}
+
+.cart-fab-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  background: #fff;
+  border-radius: 999px;
+  color: #d00000;
+  font-size: 11px;
+  font-weight: 900;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .22);
+}
+
+.cart-fab-badge[hidden] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cart-fab.bump {
+    animation: fabBump .45s ease;
+  }
+}
+
+@keyframes fabBump {
+  0% {
+    transform: scale(1);
+  }
+
+  30% {
+    transform: scale(1.16);
+  }
+
+  60% {
+    transform: scale(.94);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+body.cart-open .cart-fab,
+body.gate-open .cart-fab {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .cart-fab {
+    right: 14px;
+    bottom: calc(84px + env(safe-area-inset-bottom));
+    width: 54px;
+    height: 54px;
+  }
+
+  .cart-fab svg {
+    width: 24px;
+    height: 24px;
   }
 }

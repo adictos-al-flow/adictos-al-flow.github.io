@@ -31,7 +31,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261110c">
+  <link rel="stylesheet" href="styles.css?v=20261111a">
 
   <script type="application/ld+json">
   {
@@ -105,6 +105,8 @@
 
   <nav class="cat-nav" aria-label="Categorías">
     <button class="cat-btn active" data-cat="ropa">ROPA</button>
+    <button class="cat-btn" data-cat="gala">TRAJES DE GALA</button>
+    <button class="cat-btn" data-cat="ninos">ROPA DE NIÑOS</button>
     <button class="cat-btn" data-cat="zapatillas">TENIS</button>
     <button class="cat-btn" data-cat="cadenas">CADENAS</button>
     <button class="cat-btn" data-cat="accesorios">ACCESORIOS</button>
@@ -144,6 +146,14 @@
       <button class="cat-tile" data-cat="ropa" type="button">
         <span class="cat-tile-ico" aria-hidden="true"><img src="assets/catalog/ref/hoodie-your-brand-crazy-negra-roja-1.webp" alt="" width="650" height="650"></span>
         <span class="cat-tile-txt"><strong>Ropa</strong><small>Camisas, tees y hoodies</small></span>
+      </button>
+      <button class="cat-tile" data-cat="gala" type="button">
+        <span class="cat-tile-ico" aria-hidden="true"><img src="assets/catalog/gala/gala-disenador-vestido-negro.webp" alt="" width="900" height="900"></span>
+        <span class="cat-tile-txt"><strong>Trajes de Gala</strong><small>Inspiración de diseñador</small></span>
+      </button>
+      <button class="cat-tile" data-cat="ninos" type="button">
+        <span class="cat-tile-ico" aria-hidden="true"><img src="assets/catalog/gala/gala-ninos-conjunto-principe.webp" alt="" width="900" height="900"></span>
+        <span class="cat-tile-txt"><strong>Ropa de Niños</strong><small>Estilo para los más pequeños</small></span>
       </button>
       <button class="cat-tile" data-cat="zapatillas" type="button">
         <span class="cat-tile-ico" aria-hidden="true"><img src="assets/catalog/ref/jordan-1-low-negro-blanco-plata-1.webp" alt="" width="650" height="650"></span>
@@ -217,6 +227,11 @@
     </button>
   </nav>
 
+  <button class="cart-fab" id="cartFab" type="button" aria-haspopup="dialog" aria-label="Abrir carrito">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.2 10.4a2 2 0 0 0 1.96 1.6H18a2 2 0 0 0 1.96-1.55L21.6 7H6"/><circle cx="10" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>
+    <span class="cart-fab-badge" id="cartFabBadge" hidden>0</span>
+  </button>
+
   <div class="modal" id="modal" aria-hidden="true">
     <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mName">
       <button class="close" id="modalClose" aria-label="Cerrar">✕</button>
@@ -247,7 +262,7 @@
 
         <button class="btn-cart" id="addCartBtn" type="button">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.2 10.4a2 2 0 0 0 1.96 1.6H18a2 2 0 0 0 1.96-1.55L21.6 7H6"/><circle cx="10" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>
-          Añadir al carrito
+          <span id="addCartText">Añadir al carrito</span>
         </button>
         <p class="m-note" id="mNote">Pedido mínimo de RD$1,000 · Envío gratis a República Dominicana</p>
       </div>
@@ -261,11 +276,11 @@
     <button class="footer-admin" id="adminLink" type="button">Admin</button>
   </footer>
 
-  <script src="config.js?v=20261110c" defer></script>
-  <script src="products.js?v=20261110c" defer></script>
-  <script src="accounts.js?v=20261110c" defer></script>
-  <script src="app.js?v=20261110c" defer></script>
-  <script src="cart.js?v=20261110c" defer></script>
-  <script src="admin.js?v=20261110c" defer></script>
+  <script src="config.js?v=20261111a" defer></script>
+  <script src="products.js?v=20261111a" defer></script>
+  <script src="accounts.js?v=20261111a" defer></script>
+  <script src="app.js?v=20261111a" defer></script>
+  <script src="cart.js?v=20261111a" defer></script>
+  <script src="admin.js?v=20261111a" defer></script>
 </body>
 </html>

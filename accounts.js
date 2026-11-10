@@ -3,7 +3,6 @@
   const KEYS = {
     favs: "aaf-favs",
     orders: "aaf-orders",
-    cards: "aaf-cards",
     profiles: "aaf-profiles",
   };
 
@@ -26,7 +25,6 @@
           <div class="acct-tabs" role="tablist" aria-label="Mi cuenta">
             <button class="acct-tab active" type="button" data-atab="favs" role="tab" aria-selected="true">Favoritos</button>
             <button class="acct-tab" type="button" data-atab="orders" role="tab" aria-selected="false">Pedidos</button>
-            <button class="acct-tab" type="button" data-atab="cards" role="tab" aria-selected="false">Tarjetas</button>
           </div>
 
           <div class="acct-pane" id="paneFavs">
@@ -35,34 +33,6 @@
 
           <div class="acct-pane" id="paneOrders" hidden>
             <div class="ord-list" id="ordList"></div>
-          </div>
-
-          <div class="acct-pane" id="paneCards" hidden>
-            <div class="paycard-list" id="payCardList"></div>
-            <form class="acct-form" id="cardForm" novalidate>
-              <label class="acct-field">Alias de la tarjeta
-                <input type="text" name="alias" placeholder="Ej. Mi Visa personal" maxlength="24" autocomplete="off">
-              </label>
-              <div class="acct-grid2">
-                <label class="acct-field">Marca
-                  <select name="brand">
-                    <option>Visa</option>
-                    <option>Mastercard</option>
-                    <option>American Express</option>
-                    <option>Otra</option>
-                  </select>
-                </label>
-                <label class="acct-field">Últimos 4 dígitos
-                  <input type="text" name="last4" inputmode="numeric" placeholder="1234" maxlength="4" autocomplete="off">
-                </label>
-              </div>
-              <label class="acct-field">Vencimiento (MM/AA)
-                <input type="text" name="exp" inputmode="numeric" placeholder="08/28" maxlength="5" autocomplete="off">
-              </label>
-              <p class="acct-msg" id="cardMsg" role="alert"></p>
-              <button class="acct-primary" type="submit">Guardar tarjeta</button>
-            </form>
-            <p class="acct-fine">Por seguridad solo guardamos un alias y los últimos 4 dígitos. El número completo y el CVV se ingresan siempre en la pantalla segura de PayPal.</p>
           </div>
 
           <div class="acct-actions" id="acctActions"></div>
@@ -93,7 +63,7 @@
         <ul class="gate-benefits">
           <li>Catálogo completo y pedidos con envío a tu dirección</li>
           <li>Favoritos e historial ligados a tu cuenta</li>
-          <li>Tarjetas guardadas para pagar más rápido</li>
+          <li>Tu dirección de entrega queda guardada para la próxima</li>
         </ul>
         <p class="gate-fine">Solo usamos tu nombre y correo de Google. Los pagos se procesan de forma segura en PayPal, nunca en esta página.</p>
       </div>
@@ -108,12 +78,8 @@
   const tabs = Array.from(document.querySelectorAll(".acct-tab"));
   const paneFavs = document.getElementById("paneFavs");
   const paneOrders = document.getElementById("paneOrders");
-  const paneCards = document.getElementById("paneCards");
   const favList = document.getElementById("favList");
   const ordList = document.getElementById("ordList");
-  const payCardList = document.getElementById("payCardList");
-  const cardForm = document.getElementById("cardForm");
-  const cardMsg = document.getElementById("cardMsg");
   const actionsEl = document.getElementById("acctActions");
   const fineEl = document.getElementById("acctFine");
   const accountBtn = document.getElementById("accountBtn");
@@ -211,17 +177,6 @@
       Object.assign(found.order, patch);
       writeMap(KEYS.orders, found.map);
       return found.order;
-    },
-    cards() {
-      return listOf(KEYS.cards).filter((c) => c && typeof c.id === "string");
-    },
-    addCard(card) {
-      const list = DATA.cards();
-      list.unshift(card);
-      setList(KEYS.cards, list.slice(0, 10));
-    },
-    removeCard(id) {
-      setList(KEYS.cards, DATA.cards().filter((c) => c.id !== id));
     },
     profile() {
       const p = readMap(KEYS.profiles)[uid()];
@@ -463,10 +418,8 @@
     });
     paneFavs.hidden = name !== "favs";
     paneOrders.hidden = name !== "orders";
-    paneCards.hidden = name !== "cards";
     if (name === "favs") renderFavs();
-    else if (name === "orders") renderOrders();
-    else renderCards();
+    else renderOrders();
   }
 
   function renderHome() {
@@ -551,84 +504,6 @@
       .join("");
   }
 
-  function brandClass(brand) {
-    const b = String(brand || "").toLowerCase();
-    if (b.indexOf("visa") >= 0) return "visa";
-    if (b.indexOf("master") >= 0) return "mastercard";
-    if (b.indexOf("american") >= 0 || b.indexOf("amex") >= 0) return "amex";
-    return "other";
-  }
-
-  function renderCards() {
-    const cards = DATA.cards();
-    if (!cards.length) {
-      payCardList.innerHTML =
-        '<p class="acct-empty">Guarda tus tarjetas con un alias y los últimos 4 dígitos para elegir rápido al pagar.</p>';
-      return;
-    }
-    payCardList.innerHTML = cards
-      .map(
-        (c) => `
-        <div class="paycard">
-          <span class="paycard-brand ${brandClass(c.brand)}">${esc(c.brand)}</span>
-          <div class="paycard-info">
-            <strong>${esc(c.alias)}</strong>
-            <small>•••• ${esc(c.last4)} · Vence ${esc(c.exp)}</small>
-          </div>
-          <button class="fav-remove" type="button" data-card-remove="${esc(c.id)}" aria-label="Eliminar tarjeta ${esc(c.alias)}">✕</button>
-        </div>`
-      )
-      .join("");
-  }
-
-  function setCardMsg(text) {
-    cardMsg.textContent = text || "";
-    cardMsg.classList.toggle("show", !!text);
-  }
-
-  function saveCard(event) {
-    event.preventDefault();
-    const f = cardForm.elements;
-    const alias = f.alias.value.trim();
-    const brand = f.brand.value;
-    const last4 = f.last4.value.replace(/\D/g, "");
-    const exp = f.exp.value.trim();
-
-    if (alias.length < 2) {
-      setCardMsg("Escribe un alias para reconocer la tarjeta.");
-      f.alias.focus();
-      return;
-    }
-    if (!/^\d{4}$/.test(last4)) {
-      setCardMsg("Escribe exactamente los últimos 4 dígitos de la tarjeta.");
-      f.last4.focus();
-      return;
-    }
-    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(exp)) {
-      setCardMsg("El vencimiento debe tener formato MM/AA (ej. 08/28).");
-      f.exp.focus();
-      return;
-    }
-    if (DATA.cards().some((c) => c.last4 === last4 && c.brand === brand)) {
-      setCardMsg("Ya guardaste una tarjeta con esos datos.");
-      return;
-    }
-
-    DATA.addCard({
-      id: "card_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      alias,
-      brand,
-      last4,
-      exp,
-      createdAt: new Date().toISOString(),
-    });
-    cardForm.reset();
-    setCardMsg("");
-    renderCards();
-    window.dispatchEvent(new Event("aaf:cards-changed"));
-    toast("Tarjeta guardada para tus próximas compras");
-  }
-
   function syncFavButtons() {
     const favs = DATA.favs();
     document.querySelectorAll(".fav-btn").forEach((btn) => {
@@ -670,24 +545,6 @@
 
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => setPane(tab.dataset.atab));
-  });
-
-  cardForm.addEventListener("submit", saveCard);
-  cardForm.elements.exp.addEventListener("input", () => {
-    const digits = cardForm.elements.exp.value.replace(/\D/g, "").slice(0, 4);
-    cardForm.elements.exp.value = digits.length > 2 ? digits.slice(0, 2) + "/" + digits.slice(2) : digits;
-  });
-  cardForm.elements.last4.addEventListener("input", () => {
-    cardForm.elements.last4.value = cardForm.elements.last4.value.replace(/\D/g, "").slice(0, 4);
-  });
-
-  payCardList.addEventListener("click", (e) => {
-    const remove = e.target.closest("[data-card-remove]");
-    if (!remove) return;
-    DATA.removeCard(remove.dataset.cardRemove);
-    renderCards();
-    window.dispatchEvent(new Event("aaf:cards-changed"));
-    toast("Tarjeta eliminada");
   });
 
   document.addEventListener("click", (e) => {
@@ -738,9 +595,6 @@
     syncModalFav,
     syncFavButtons,
     open: openAccount,
-    openCards() {
-      openAccount("cards");
-    },
     refresh() {
       if (!panel.hidden && !homeView.hidden) setPane(currentPane);
     },

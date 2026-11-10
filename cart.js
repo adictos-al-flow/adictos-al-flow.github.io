@@ -101,8 +101,7 @@
 
               <div class="co-sec-title">Método de pago</div>
               <div class="co-paymethods" id="coPayMethods"></div>
-              <button class="co-manage" id="coManageCards" type="button">+ Guardar / administrar tarjetas</button>
-              <p class="co-cardnote" id="coCardNote" hidden></p>
+              <p class="co-payment-note">Los datos de tarjeta se introducen en PayPal, no en esta tienda. La opción sin cuenta depende de PayPal y del país.</p>
 
               <div class="co-sec-title">Resumen del pedido</div>
               <div class="co-summary" id="coSummary"></div>
@@ -169,8 +168,6 @@
   const coZip = document.getElementById("coZip");
   const coMsg = document.getElementById("coMsg");
   const coPayMethods = document.getElementById("coPayMethods");
-  const coManageCards = document.getElementById("coManageCards");
-  const coCardNote = document.getElementById("coCardNote");
   const coSummary = document.getElementById("coSummary");
   const coLocation = document.getElementById("coLocation");
   const coTotal = document.getElementById("coTotal");
@@ -287,14 +284,6 @@
     return COUNTRIES.find((c) => c.code === code) || COUNTRIES[0];
   }
 
-  function brandClass(brand) {
-    const b = String(brand || "").toLowerCase();
-    if (b.indexOf("visa") >= 0) return "visa";
-    if (b.indexOf("master") >= 0) return "mastercard";
-    if (b.indexOf("american") >= 0 || b.indexOf("amex") >= 0) return "amex";
-    return "other";
-  }
-
   function updateBadge() {
     const total = totalsOf(items);
     badge.textContent = total.qty > 99 ? "99+" : String(total.qty);
@@ -303,6 +292,18 @@
     if (bnBadge) {
       bnBadge.textContent = badge.textContent;
       bnBadge.hidden = badge.hidden;
+    }
+    const fab = document.getElementById("cartFab");
+    const fabBadge = document.getElementById("cartFabBadge");
+    if (fab && fabBadge) {
+      if (!badge.hidden && fabBadge.textContent !== badge.textContent) {
+        fab.classList.remove("bump");
+        void fab.offsetWidth;
+        fab.classList.add("bump");
+      }
+      fabBadge.textContent = badge.textContent;
+      fabBadge.hidden = badge.hidden;
+      fab.setAttribute("aria-label", total.qty ? "Abrir carrito, " + total.qty + (total.qty === 1 ? " pieza" : " piezas") : "Abrir carrito");
     }
     cartBtn.setAttribute(
       "aria-label",
@@ -313,7 +314,7 @@
   function render() {
     items = items.filter((it) => {
       const p = productOf(it.id);
-      return p && p.sizes.indexOf(it.size) >= 0;
+      return p && p.price !== null && p.sizes.indexOf(it.size) >= 0;
     });
     const valid = new Set(items.map(key));
     selected.forEach((k) => {
@@ -409,7 +410,7 @@
 
   function renderReco() {
     const inCart = new Set(items.map((it) => it.id));
-    let pool = PRODUCTS.filter((p) => !inCart.has(p.id));
+    let pool = PRODUCTS.filter((p) => p.price !== null && !inCart.has(p.id));
     const below = totalsOf(selectedItems()).dop < minDop();
     if (below) pool = pool.slice().sort((a, b) => a.price - b.price);
     const picks = pool.slice(0, 8);
@@ -508,33 +509,21 @@
     );
   }
 
+  const CARD_SVG =
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19"/><path d="M6 14.5h4"/></svg>';
+
   function renderPayMethods() {
-    const cards = DATA ? DATA.cards() : [];
-    let out =
+    coPayMethods.innerHTML =
       '<label class="co-pm' + (payMethod === "paypal" ? " on" : "") + '">' +
       '<input type="radio" name="paymethod" value="paypal"' + (payMethod === "paypal" ? " checked" : "") + ">" +
       '<span class="co-pm-badge paypal">PayPal</span>' +
-      '<span class="co-pm-txt"><strong>PayPal o tarjeta</strong><small>Débito / crédito · Pago seguro</small></span>' +
+      '<span class="co-pm-txt"><strong>Pagar con PayPal</strong><small>Saldo o cuenta PayPal · Pago seguro</small></span>' +
+      "</label>" +
+      '<label class="co-pm' + (payMethod === "card" ? " on" : "") + '">' +
+      '<input type="radio" name="paymethod" value="card"' + (payMethod === "card" ? " checked" : "") + ">" +
+      '<span class="co-pm-badge bankcard">' + CARD_SVG + "</span>" +
+      '<span class="co-pm-txt"><strong>Pagar con tarjeta</strong><small>Débito o crédito · En la página segura de PayPal</small></span>' +
       "</label>";
-    cards.forEach((c) => {
-      out +=
-        '<label class="co-pm' + (payMethod === c.id ? " on" : "") + '">' +
-        '<input type="radio" name="paymethod" value="' + esc(c.id) + '"' + (payMethod === c.id ? " checked" : "") + ">" +
-        '<span class="paycard-brand ' + brandClass(c.brand) + '">' + esc(c.brand) + "</span>" +
-        '<span class="co-pm-txt"><strong>' + esc(c.alias) + "</strong><small>•••• " + esc(c.last4) + " · Vence " + esc(c.exp) + "</small></span>" +
-        "</label>";
-    });
-    coPayMethods.innerHTML = out;
-
-    const card = payMethod !== "paypal" ? cards.find((c) => c.id === payMethod) : null;
-    if (card) {
-      coCardNote.hidden = false;
-      coCardNote.textContent =
-        "Elegiste " + card.alias + " (•••• " + card.last4 + "). Ingresarás el número completo y el CVV en la pantalla segura de PayPal.";
-    } else {
-      coCardNote.hidden = true;
-      coCardNote.textContent = "";
-    }
   }
 
   function renderSummary() {
@@ -567,8 +556,7 @@
     coPieces.textContent = t.qty ? "· " + t.qty + (t.qty === 1 ? " pieza" : " piezas") : "";
     coUsdNote.textContent =
       "Cargo en US$" + usdTotalOf(sel).toFixed(2) + " (tasa RD$" + usdRate() + " por US$) · Pago seguro con PayPal";
-    const card = payMethod !== "paypal" && DATA ? DATA.cards().find((c) => c.id === payMethod) : null;
-    coPay.textContent = "Pagar " + money(t.dop) + (card ? " · " + card.brand + " ••••" + card.last4 : " · PayPal o tarjeta");
+    coPay.textContent = (payMethod === "card" ? "Pagar con tarjeta · " : "Pagar con PayPal · ") + money(t.dop);
     coPay.disabled = t.dop < minDop() || t.qty === 0;
   }
 
@@ -670,7 +658,7 @@
   }
 
   function add(product, size) {
-    if (!product || !size) return;
+    if (!product || product.price === null || !product.sizes.includes(size)) return;
     const k = product.id + "|" + size;
     const found = items.find((it) => it.id === product.id && it.size === size);
     if (found) {
@@ -755,8 +743,6 @@
     }
 
     const s = v.shipping;
-    const cards = DATA ? DATA.cards() : [];
-    const card = payMethod !== "paypal" ? cards.find((c) => c.id === payMethod) : null;
     const orderId =
       "AAF-" + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 4).toUpperCase();
 
@@ -772,7 +758,6 @@
       totalDop: t.dop,
       totalUsd: usdTotalOf(sel),
       shipping: s,
-      card: card ? { alias: card.alias, brand: card.brand, last4: card.last4 } : null,
     };
 
     if (DATA) {
@@ -813,11 +798,9 @@
       handling_cart: "0",
       tax_cart: "0",
       invoice: orderId,
-      custom: [orderId, "ced:" + s.doc, "tel:" + s.phone, card ? "card:" + card.brand + "*" + card.last4 : ""]
-        .filter(Boolean)
-        .join("|")
-        .slice(0, 255),
+      custom: [orderId, "ced:" + s.doc, "tel:" + s.phone].join("|").slice(0, 255),
       lc: "ES",
+      landing_page: payMethod === "card" ? "Billing" : "Login",
     };
     const u = DATA ? DATA.user() : null;
     if (u && u.google && u.email) fields.email = u.email;
@@ -884,6 +867,8 @@
   }
 
   cartBtn.addEventListener("click", open);
+  const cartFab = document.getElementById("cartFab");
+  if (cartFab) cartFab.addEventListener("click", open);
   closeBtn.addEventListener("click", close);
   panel.addEventListener("click", (e) => {
     if (e.target === panel) close();
@@ -934,9 +919,6 @@
   continueBtn.addEventListener("click", goCheckout);
   clearBtn.addEventListener("click", clear);
   coBack.addEventListener("click", goCart);
-  coManageCards.addEventListener("click", () => {
-    if (window.ACCOUNTS && typeof window.ACCOUNTS.openCards === "function") window.ACCOUNTS.openCards();
-  });
   coPay.addEventListener("click", pay);
   cfShop.addEventListener("click", () => {
     view = "cart";
@@ -960,16 +942,8 @@
   coPayMethods.addEventListener("change", (e) => {
     const radio = e.target.closest('input[name="paymethod"]');
     if (!radio) return;
-    payMethod = radio.value;
+    payMethod = radio.value === "card" ? "card" : "paypal";
     renderCheckout();
-  });
-
-  window.addEventListener("aaf:cards-changed", () => {
-    if (view === "checkout") {
-      const cards = DATA ? DATA.cards() : [];
-      if (payMethod !== "paypal" && !cards.some((c) => c.id === payMethod)) payMethod = "paypal";
-      renderCheckout();
-    }
   });
 
   document.addEventListener("keydown", (e) => {
