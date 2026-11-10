@@ -24,6 +24,7 @@
           <div class="cart-min" id="cartMin"></div>
           <p class="cart-note">Pedido mínimo de 3 productos · Entrega en República Dominicana</p>
           <button class="cart-pay" id="cartPay" type="button" hidden>Pagar con tarjeta</button>
+          <p class="cart-pay-note" id="cartPayNote" hidden></p>
           <button class="cart-checkout" id="cartCheckout" type="button">Pedir todo por WhatsApp</button>
           <button class="cart-clear" id="cartClear" type="button">Vaciar carrito</button>
         </div>
@@ -39,6 +40,7 @@
   const minEl = document.getElementById("cartMin");
   const checkoutBtn = document.getElementById("cartCheckout");
   const payBtn = document.getElementById("cartPay");
+  const payNote = document.getElementById("cartPayNote");
   const clearBtn = document.getElementById("cartClear");
   const closeBtn = document.getElementById("cartClose");
   const cartBtn = document.getElementById("cartBtn");
@@ -101,6 +103,24 @@
       dop += product.price * it.qty;
     });
     return { qty, dop };
+  }
+
+  function usdRate() {
+    const rate = Number(storeConfig().usdRate);
+    return rate > 0 ? rate : 60;
+  }
+
+  function unitUsd(price) {
+    return Math.round((price / usdRate()) * 100) / 100;
+  }
+
+  function paypalTotalUsd() {
+    let usd = 0;
+    items.forEach((it) => {
+      const product = productOf(it.id);
+      if (product) usd += unitUsd(product.price) * it.qty;
+    });
+    return Math.round(usd * 100) / 100;
   }
 
   function render() {
@@ -180,9 +200,19 @@
     checkoutBtn.disabled = !items.length;
     clearBtn.hidden = !items.length;
 
-    payBtn.hidden = !storeConfig().payApiUrl || !items.length;
+    const cfg = storeConfig();
+    const hasPaypal = String(cfg.paypalEmail || "").trim() !== "";
+    payBtn.hidden = (!hasPaypal && !cfg.payApiUrl) || !items.length;
     payBtn.disabled = !items.length;
-    payBtn.textContent = "Pagar con tarjeta · " + moneyDop(total.dop);
+    payBtn.classList.toggle("is-paypal", hasPaypal);
+    payBtn.textContent =
+      (hasPaypal ? "Pagar con PayPal o tarjeta · " : "Pagar con tarjeta · ") + moneyDop(total.dop);
+    payNote.hidden = !hasPaypal;
+    if (hasPaypal) {
+      payNote.textContent =
+        "Pago seguro con PayPal o tarjeta · Cargo en US$" + paypalTotalUsd().toFixed(2) +
+        " (tasa RD$" + usdRate() + " por US$)";
+    }
   }
 
   function open() {
@@ -289,6 +319,10 @@
   async function pay() {
     if (!items.length) return;
     const config = storeConfig();
+    if (String(config.paypalEmail || "").trim()) {
+      paypalCheckout();
+      return;
+    }
     if (!config.payApiUrl) return;
 
     const total = totals();
@@ -318,6 +352,55 @@
         window.showToast("No se pudo iniciar el pago. Intenta de nuevo o pide por WhatsApp.");
       }
     }
+  }
+
+  function paypalCheckout() {
+    const config = storeConfig();
+    const total = totals();
+    if (total.qty < 3) {
+      if (typeof window.showToast === "function") window.showToast("Pedido mínimo de 3 piezas");
+      return;
+    }
+
+    const base = window.location.origin + window.location.pathname;
+    const fields = {
+      cmd: "_cart",
+      upload: "1",
+      business: String(config.paypalEmail).trim(),
+      currency_code: "USD",
+      charset: "utf-8",
+      return: base + "?pago=exito",
+      cancel_return: base + "?pago=cancelado",
+      shipping: "0",
+      shipping2: "0",
+      handling_cart: "0",
+      tax_cart: "0",
+      invoice: "AAF-" + Date.now(),
+      custom: items.map((it) => it.id + ":" + it.size + "x" + it.qty).join(",").slice(0, 255),
+    };
+
+    items.forEach((it, i) => {
+      const product = productOf(it.id);
+      if (!product) return;
+      const n = i + 1;
+      fields["item_name_" + n] = product.name + " — Talla " + it.size;
+      fields["amount_" + n] = unitUsd(product.price).toFixed(2);
+      fields["quantity_" + n] = String(it.qty);
+    });
+
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = "https://www.paypal.com/cgi-bin/webscr";
+    form.style.display = "none";
+    Object.keys(fields).forEach((name) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      input.value = fields[name];
+      form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
   }
 
   cartBtn.addEventListener("click", open);
@@ -368,15 +451,8 @@
       window.showToast("Pago cancelado. Tu carrito sigue guardado.");
     }
 
-    params.delete("pago");
-    params.delete("session_id");
-    const query = params.toString();
     try {
-      window.history.replaceState(
-        null,
-        "",
-        window.location.pathname + (query ? "?" + query : "") + window.location.hash
-      );
+      window.history.replaceState(null, "", window.location.pathname + window.location.hash);
     } catch (e) {}
   }
 

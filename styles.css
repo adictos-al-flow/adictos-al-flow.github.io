@@ -25,7 +25,6 @@ body {
   flex-direction: column;
   min-height: 100vh;
   margin: 0;
-  padding-top: var(--strip-h);
   background: var(--bg);
   color: var(--black);
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -46,13 +45,10 @@ img {
   max-width: 100%;
 }
 
-/* Franja superior fija */
+/* Franja superior */
 .top-strip {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1100;
+  position: static;
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2061,6 +2057,21 @@ body.cart-open {
   cursor: not-allowed;
 }
 
+.cart-pay.is-paypal {
+  background: linear-gradient(180deg, #0070ba, #003087);
+}
+
+.cart-pay.is-paypal:hover {
+  background: #005ea6;
+}
+
+.cart-pay-note {
+  margin: 8px 0 0;
+  font-size: 10.5px;
+  color: var(--muted);
+  text-align: center;
+}
+
 .cart-checkout {
   width: 100%;
   margin-top: 12px;
@@ -2615,11 +2626,9 @@ body {
   letter-spacing: .6px;
 }
 
-/* Cabecera pegajosa */
+/* Cabecera */
 .site-header {
-  position: sticky;
-  top: var(--strip-h);
-  z-index: 1000;
+  position: relative;
   display: flex;
   align-items: center;
   gap: 14px;
