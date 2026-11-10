@@ -7,6 +7,6 @@ window.STORE_CONFIG = {
   stripText: "PEDIDO MÍNIMO DE 3 PRODUCTOS O MÁS",
   stripEnabled: true,
   payApiUrl: "",
-  paypalEmail: "",
+  paypalEmail: "vfrancia051@gmail.com",
   version: 1,
 };
