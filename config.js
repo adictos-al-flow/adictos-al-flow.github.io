@@ -7,7 +7,7 @@ window.STORE_CONFIG = {
   stripEnabled: true,
   payApiUrl: "",
   paypalEmail: "vfrancia051@gmail.com",
-  googleClientId: "",
+  googleClientId: "816329308428-mdruun2rm82ikvjf29lghamq2isbafvf.apps.googleusercontent.com",
   minOrderDop: 1000,
   version: 2,
 };
