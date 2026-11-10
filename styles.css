@@ -3281,6 +3281,318 @@ body.no-strip .site-header {
   }
 }
 
+/* ===== Acceso obligatorio con Google ===== */
+body.gate-open {
+  overflow: hidden;
+}
+
+.gate {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  scrollbar-color: #e10600 rgba(0, 0, 0, .25);
+}
+
+.gate[hidden] {
+  display: none;
+}
+
+.gate::-webkit-scrollbar {
+  width: 8px;
+}
+
+.gate::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, .25);
+}
+
+.gate::-webkit-scrollbar-thumb {
+  background: linear-gradient(#ff2d20, #d00000);
+  border-radius: 8px;
+}
+
+.gate-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 85% -10%, rgba(255, 120, 90, .55), transparent 60%),
+    radial-gradient(90% 70% at 10% 110%, rgba(120, 0, 0, .7), transparent 60%),
+    linear-gradient(155deg, #ff2d20 0%, #d00000 42%, #7a0000 78%, #4a0000 100%);
+}
+
+.gate-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+  opacity: .16;
+  mix-blend-mode: overlay;
+}
+
+.gate-bg::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(38% 30% at 30% 30%, rgba(255, 255, 255, .16), transparent 70%),
+    radial-gradient(30% 26% at 72% 62%, rgba(255, 190, 120, .18), transparent 70%);
+  animation: gateDrift 14s ease-in-out infinite alternate;
+}
+
+@keyframes gateDrift {
+  from {
+    transform: translate3d(-3%, -2%, 0) rotate(-2deg);
+  }
+  to {
+    transform: translate3d(3%, 3%, 0) rotate(2deg);
+  }
+}
+
+.gate-card {
+  position: relative;
+  width: min(440px, 100%);
+  margin: auto;
+  padding: 34px 30px 26px;
+  background: #fff;
+  border-radius: 26px;
+  box-shadow: 0 30px 80px rgba(40, 0, 0, .5);
+  text-align: center;
+  animation: gateIn .5s cubic-bezier(.22, .9, .3, 1) both;
+  outline: none;
+}
+
+@keyframes gateIn {
+  from {
+    opacity: 0;
+    transform: translateY(26px) scale(.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.gate-logo {
+  display: inline-grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, #ff2d20, #b80000);
+  color: #fff;
+  font-weight: 900;
+  font-size: 17px;
+  letter-spacing: .5px;
+  border-radius: 16px;
+  box-shadow: 0 10px 24px rgba(224, 6, 0, .35);
+  transform: rotate(-4deg);
+}
+
+.gate-eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #b80000;
+}
+
+.gate-title {
+  margin: 10px 0 0;
+  font-size: clamp(28px, 7vw, 38px);
+  line-height: 1.06;
+  font-weight: 900;
+  letter-spacing: -1px;
+  color: #1a0508;
+}
+
+.gate-title em {
+  font-style: normal;
+  color: #e10600;
+}
+
+.gate-sub {
+  margin: 12px auto 0;
+  max-width: 34ch;
+  color: #6b6b6b;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.gate-google {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0 4px;
+  min-height: 44px;
+}
+
+.gate-error {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  background: #fff8e6;
+  border: 1px solid #f0dca0;
+  border-radius: 12px;
+  color: #7a5b00;
+  font-size: 12.5px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.gate-error[hidden] {
+  display: none;
+}
+
+.gate-retry {
+  margin-top: 6px;
+  padding: 9px 18px;
+  background: linear-gradient(90deg, #ff2d20, #d00000);
+  color: #fff;
+  border: 0;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 12.5px;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(224, 6, 0, .3);
+}
+
+.gate-retry:hover {
+  filter: brightness(1.08);
+}
+
+.gate-benefits {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 16px 0 0;
+  border-top: 1px dashed #eee;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.gate-benefits li {
+  position: relative;
+  padding-left: 26px;
+  color: #444;
+  font-size: 12.5px;
+  font-weight: 600;
+  animation: gateIn .5s ease both;
+}
+
+.gate-benefits li:nth-child(1) {
+  animation-delay: .15s;
+}
+
+.gate-benefits li:nth-child(2) {
+  animation-delay: .25s;
+}
+
+.gate-benefits li:nth-child(3) {
+  animation-delay: .35s;
+}
+
+.gate-benefits li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  background: #ffe9e6;
+  color: #e10600;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.gate-fine {
+  margin: 16px 0 0;
+  color: #9a9a9a;
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+@media (max-width: 400px) {
+  .gate-card {
+    padding: 26px 20px 20px;
+    border-radius: 20px;
+  }
+}
+
+/* ===== Carrito como página completa ===== */
+.cart {
+  --cart-pad: max(16px, calc((100vw - 1020px) / 2));
+  justify-content: center;
+  padding: 0;
+  background: #f2f3f5;
+  backdrop-filter: none;
+}
+
+.cart-box {
+  max-width: none;
+  border-radius: 0;
+  background: #f2f3f5;
+  animation: cartPageIn .3s cubic-bezier(.22, .9, .3, 1) both;
+}
+
+@keyframes cartPageIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.cart-head {
+  background: #fff;
+  padding: 16px var(--cart-pad) 12px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.cart-head h2 {
+  font-size: 24px;
+}
+
+.cart-view {
+  align-items: center;
+}
+
+.cart-view > .cart-minbar,
+.cart-view > .cart-selectrow,
+.cart-view > .cart-body,
+.cart-view > .cart-reco,
+.cart-view > .co-body,
+.cart-view > .confirm-body {
+  width: 100%;
+  max-width: 1020px;
+}
+
+.cart-body {
+  align-items: center;
+  padding: 16px 14px;
+}
+
+.cart-body > * {
+  width: 100%;
+}
+
+.cart-view > .cart-foot {
+  width: 100%;
+  max-width: none;
+  background: #fff;
+  border-top: 1px solid #e8e8e8;
+  padding: 14px var(--cart-pad) 18px;
+}
+
 /* ============================================================
    Carrito Temu · Checkout · Confirmación · Cuenta
    ============================================================ */

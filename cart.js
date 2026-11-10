@@ -607,6 +607,10 @@
   }
 
   function open() {
+    if (window.ACCOUNTS && !window.ACCOUNTS.logged) {
+      window.ACCOUNTS.open();
+      return;
+    }
     if (!panel.hidden) return;
     lastFocused = document.activeElement;
     view = "cart";

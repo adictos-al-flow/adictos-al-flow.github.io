@@ -1,6 +1,5 @@
 (function () {
   const SESSION_KEY = "aaf-session2";
-  const GUEST_KEY = "aaf-guest-ok";
   const KEYS = {
     favs: "aaf-favs",
     orders: "aaf-orders",
@@ -11,6 +10,7 @@
   try {
     localStorage.removeItem("aaf-accounts");
     localStorage.removeItem("aaf-session");
+    localStorage.removeItem("aaf-guest-ok");
   } catch (e) {}
 
   const html = `
@@ -18,31 +18,9 @@
       <div class="acct-box" role="dialog" aria-modal="true" aria-labelledby="acctTitle">
         <button class="acct-close" id="acctClose" type="button" aria-label="Cerrar">✕</button>
 
-        <div class="acct-view" id="acctAuth">
+        <div class="acct-view" id="acctHome">
           <div class="acct-eyebrow">ADICTOS AL FLOW · CUENTA</div>
           <h2 id="acctTitle">Tu cuenta</h2>
-          <p class="acct-sub">Entra con Google para guardar tus favoritos, tus pedidos con dirección de entrega y tus tarjetas para comprar más rápido.</p>
-
-          <div class="google-zone">
-            <div class="google-btn-wrap" id="googleBtnWrap"></div>
-            <div class="google-soon" id="googleSoon" hidden>
-              <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-              <strong>Acceso con Google</strong>
-              <span>Muy pronto podrás entrar con tu cuenta de Google. Mientras tanto compra como invitado: tus pedidos y favoritos se guardan en este dispositivo.</span>
-            </div>
-          </div>
-
-          <button class="acct-primary" id="guestBtn" type="button">Continuar como invitado</button>
-
-          <ul class="acct-benefits">
-            <li>Guarda con un corazón los productos que te gustan</li>
-            <li>Historial de pedidos con su ubicación de entrega</li>
-            <li>Tarjetas guardadas para pagar más rápido</li>
-          </ul>
-          <p class="acct-fine">Tus datos se guardan solo en este navegador. Los pagos se procesan de forma segura en PayPal, nunca en esta página.</p>
-        </div>
-
-        <div class="acct-view" id="acctHome" hidden>
           <div class="acct-profile" id="acctProfile"></div>
 
           <div class="acct-tabs" role="tablist" aria-label="Mi cuenta">
@@ -95,9 +73,36 @@
 
   document.body.insertAdjacentHTML("beforeend", html);
 
+  const gateHtml = `
+    <div class="gate" id="loginGate" hidden>
+      <div class="gate-bg" aria-hidden="true"></div>
+      <div class="gate-card" role="dialog" aria-modal="true" aria-labelledby="gateTitle" tabindex="-1">
+        <div class="gate-logo" aria-hidden="true">AAF</div>
+        <div class="gate-eyebrow">ADICTOS AL FLOW · ACCESO</div>
+        <h1 class="gate-title" id="gateTitle">Entra con <em>Google</em><br>para comprar</h1>
+        <p class="gate-sub">Necesitas una cuenta de Google para ver el catálogo, guardar favoritos y hacer pedidos con envío. Es rápido y seguro.</p>
+
+        <div class="gate-google" id="gateGoogleWrap"></div>
+
+        <div class="gate-error" id="gateError" hidden>
+          <strong>No se pudo cargar el acceso con Google.</strong>
+          <span>Revisa tu conexión y vuelve a intentarlo.</span>
+          <button class="gate-retry" id="gateRetry" type="button">Reintentar</button>
+        </div>
+
+        <ul class="gate-benefits">
+          <li>Catálogo completo y pedidos con envío a tu dirección</li>
+          <li>Favoritos e historial ligados a tu cuenta</li>
+          <li>Tarjetas guardadas para pagar más rápido</li>
+        </ul>
+        <p class="gate-fine">Solo usamos tu nombre y correo de Google. Los pagos se procesan de forma segura en PayPal, nunca en esta página.</p>
+      </div>
+    </div>`;
+
+  document.body.insertAdjacentHTML("beforeend", gateHtml);
+
   const panel = document.getElementById("acctPanel");
   const closeBtn = document.getElementById("acctClose");
-  const authView = document.getElementById("acctAuth");
   const homeView = document.getElementById("acctHome");
   const profileEl = document.getElementById("acctProfile");
   const tabs = Array.from(document.querySelectorAll(".acct-tab"));
@@ -111,9 +116,13 @@
   const cardMsg = document.getElementById("cardMsg");
   const actionsEl = document.getElementById("acctActions");
   const fineEl = document.getElementById("acctFine");
-  const guestBtn = document.getElementById("guestBtn");
   const accountBtn = document.getElementById("accountBtn");
   const accountBtnText = document.getElementById("accountBtnText");
+  const gate = document.getElementById("loginGate");
+  const gateCard = gate.querySelector(".gate-card");
+  const gateGoogleWrap = document.getElementById("gateGoogleWrap");
+  const gateError = document.getElementById("gateError");
+  const gateRetry = document.getElementById("gateRetry");
 
   let session = null;
   try {
@@ -121,11 +130,7 @@
   } catch (e) {}
   if (!session || typeof session.id !== "string") session = null;
 
-  let guestOk = false;
-  try {
-    guestOk = localStorage.getItem(GUEST_KEY) === "1";
-  } catch (e) {}
-
+  let googleClientId = "";
   let lastFocused = null;
   let currentPane = "favs";
 
@@ -149,16 +154,13 @@
   }
 
   function user() {
-    if (session) {
-      return {
-        id: session.id,
-        name: session.name || "Cliente",
-        email: session.email || "",
-        picture: session.picture || "",
-        google: true,
-      };
-    }
-    return { id: "guest", name: "Invitado", email: "", picture: "", google: false };
+    return {
+      id: session ? session.id : "",
+      name: (session && session.name) || "Cliente",
+      email: (session && session.email) || "",
+      picture: (session && session.picture) || "",
+      google: !!session,
+    };
   }
 
   function listOf(key) {
@@ -299,6 +301,21 @@
     return JSON.parse(json);
   }
 
+  function showGate() {
+    gate.hidden = false;
+    document.body.classList.add("gate-open");
+    if (gateCard) gateCard.focus();
+  }
+
+  function hideGate() {
+    gate.hidden = true;
+    document.body.classList.remove("gate-open");
+  }
+
+  function showGateError() {
+    gateError.hidden = false;
+  }
+
   function onGoogleCredential(response) {
     try {
       const payload = decodeJwt(response.credential);
@@ -311,25 +328,49 @@
       };
       try {
         localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-        localStorage.setItem(GUEST_KEY, "1");
       } catch (e) {}
-      guestOk = true;
       migrateGuest(session.id);
+      hideGate();
       updateHeader();
-      renderHome();
       toast("Sesión iniciada con Google. Hola, " + session.name.split(/\s+/)[0]);
     } catch (e) {
       toast("No se pudo iniciar con Google. Intenta de nuevo.");
     }
   }
 
+  function renderGoogleButton() {
+    gateGoogleWrap.innerHTML = "";
+    window.google.accounts.id.initialize({
+      client_id: googleClientId,
+      callback: onGoogleCredential,
+      auto_select: false,
+      cancel_on_tap_outside: true,
+    });
+    window.google.accounts.id.renderButton(gateGoogleWrap, {
+      theme: "outline",
+      size: "large",
+      width: Math.min(360, gateGoogleWrap.clientWidth || 320),
+      text: "continue_with",
+      locale: "es",
+      shape: "pill",
+      logo_alignment: "left",
+    });
+    gateError.hidden = true;
+  }
+
   function setupGoogle() {
     const cfg = (window.STORE && window.STORE.config) || window.STORE_CONFIG || {};
-    const clientId = String(cfg.googleClientId || "").trim();
-    const wrap = document.getElementById("googleBtnWrap");
-    const soon = document.getElementById("googleSoon");
-    if (!clientId) {
-      soon.hidden = false;
+    googleClientId = String(cfg.googleClientId || "").trim();
+    if (!googleClientId) {
+      showGateError();
+      return;
+    }
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+      try {
+        renderGoogleButton();
+      } catch (e) {
+        showGateError();
+      }
       return;
     }
     const script = document.createElement("script");
@@ -338,28 +379,12 @@
     script.defer = true;
     script.onload = () => {
       try {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: onGoogleCredential,
-          auto_select: false,
-          cancel_on_tap_outside: true,
-        });
-        window.google.accounts.id.renderButton(wrap, {
-          theme: "outline",
-          size: "large",
-          width: Math.min(360, wrap.clientWidth || 340),
-          text: "continue_with",
-          locale: "es",
-          shape: "pill",
-          logo_alignment: "left",
-        });
+        renderGoogleButton();
       } catch (e) {
-        soon.hidden = false;
+        showGateError();
       }
     };
-    script.onerror = () => {
-      soon.hidden = false;
-    };
+    script.onerror = () => showGateError();
     document.head.appendChild(script);
   }
 
@@ -379,19 +404,14 @@
     syncModalFav();
   }
 
-  function showAuth() {
-    authView.hidden = false;
-    homeView.hidden = true;
-  }
-
   function openAccount(pane) {
-    lastFocused = document.activeElement;
-    if (session || guestOk) {
-      renderHome();
-      if (pane) setPane(pane);
-    } else {
-      showAuth();
+    if (!session) {
+      showGate();
+      return;
     }
+    lastFocused = document.activeElement;
+    renderHome();
+    if (pane) setPane(pane);
     panel.hidden = false;
     document.body.classList.add("acct-open");
     closeBtn.focus();
@@ -412,34 +432,26 @@
     profileEl.innerHTML =
       '<span class="acct-avatar">' + avatar + "</span>" +
       '<div class="acct-who"><strong>' + esc(u.name) + "</strong>" +
-      "<small>" + (u.google ? esc(u.email) : "Compra como invitado en este dispositivo") + "</small></div>" +
-      (u.google ? '<span class="g-chip">' + GOOGLE_G_SVG + "Google</span>" : "");
+      "<small>" + esc(u.email) + "</small></div>" +
+      '<span class="g-chip">' + GOOGLE_G_SVG + "Google</span>";
   }
 
   function renderActions() {
-    if (session) {
-      actionsEl.innerHTML = '<button class="acct-out" id="logoutBtn" type="button">Cerrar sesión</button>';
-      fineEl.textContent = "Sesión de Google activa en este dispositivo. Tus pedidos, favoritos y tarjetas se guardan aquí.";
-    } else {
-      actionsEl.innerHTML = '<button class="acct-out" id="toGoogleBtn" type="button">Entrar con Google</button>';
-      fineEl.textContent = "Modo invitado: tus pedidos, favoritos y tarjetas se guardan solo en este navegador.";
-    }
+    actionsEl.innerHTML = '<button class="acct-out" id="logoutBtn" type="button">Cerrar sesión</button>';
+    fineEl.textContent = "Sesión de Google activa en este dispositivo. Tus pedidos, favoritos y tarjetas se guardan aquí.";
     const logout = document.getElementById("logoutBtn");
     if (logout) {
       logout.addEventListener("click", () => {
         session = null;
-        guestOk = false;
         try {
           localStorage.removeItem(SESSION_KEY);
-          localStorage.removeItem(GUEST_KEY);
         } catch (e) {}
-        showAuth();
+        closeAccount();
+        showGate();
         updateHeader();
         toast("Sesión cerrada");
       });
     }
-    const toGoogle = document.getElementById("toGoogleBtn");
-    if (toGoogle) toGoogle.addEventListener("click", showAuth);
   }
 
   function setPane(name) {
@@ -458,7 +470,6 @@
   }
 
   function renderHome() {
-    authView.hidden = true;
     homeView.hidden = false;
     renderProfile();
     setPane(currentPane);
@@ -657,15 +668,6 @@
     if (e.target === panel) closeAccount();
   });
 
-  guestBtn.addEventListener("click", () => {
-    guestOk = true;
-    try {
-      localStorage.setItem(GUEST_KEY, "1");
-    } catch (e) {}
-    renderHome();
-    toast("Listo. Tus pedidos y favoritos se guardan en este dispositivo.");
-  });
-
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => setPane(tab.dataset.atab));
   });
@@ -747,6 +749,9 @@
     },
   };
 
+  gateRetry.addEventListener("click", setupGoogle);
   updateHeader();
   setupGoogle();
+  if (session) hideGate();
+  else showGate();
 })();
