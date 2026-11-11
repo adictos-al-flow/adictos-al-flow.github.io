@@ -113,7 +113,7 @@ function formatDop(value) {
 }
 
 function formatPrice(value) {
-  if (value === null) return "Próximamente";
+  if (value === null) return "Precio por confirmar";
   const currency = CURRENCIES[currentCurrency];
   return currency.symbol + Math.round(value * rateOf(currentCurrency)).toLocaleString("en-US");
 }
@@ -203,7 +203,7 @@ function renderGrid() {
       <article class="card" style="animation-delay:${(i % 8) * 35}ms">
         <div class="card-img">
           <img src="${p.img[0]}" alt="${esc(p.name)}" width="650" height="650" loading="lazy" decoding="async">
-          <span class="card-tag">${p.price === null ? "Muestra · Imagen IA" : "Envío gratis"}</span>
+          ${p.price === null ? "" : '<span class="card-tag">Envío gratis</span>'}
           <button class="fav-btn${fav ? " active" : ""}" type="button" data-id="${esc(p.id)}" aria-pressed="${fav}" aria-label="Guardar en favoritos">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.4S4.8 15.9 3 11.7A5.2 5.2 0 0 1 12 6.4a5.2 5.2 0 0 1 9 5.3c-1.8 4.2-9 8.7-9 8.7z"/></svg>
           </button>
@@ -291,9 +291,8 @@ function openModal(id) {
   mDesc.textContent = product.desc;
   modal.classList.toggle("preview", product.price === null);
   addCartBtn.disabled = product.price === null;
-  document.getElementById("addCartText").textContent = product.price === null ? "Próximamente · No disponible para compra" : "Añadir al carrito";
   document.getElementById("mNote").textContent = product.price === null
-    ? "Muestra con imagen generada por IA. Precio, tallas y disponibilidad por confirmar."
+    ? "Precio, tallas y disponibilidad por confirmar."
     : "Pedido mínimo de " + formatDop(minOrderDop()) + " · Envío gratis a República Dominicana";
 
   const mFav = document.getElementById("mFav");
