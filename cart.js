@@ -410,7 +410,7 @@
 
   function renderReco() {
     const inCart = new Set(items.map((it) => it.id));
-    let pool = PRODUCTS.filter((p) => p.price !== null && !inCart.has(p.id));
+    let pool = PRODUCTS.filter((p) => p.price !== null && p.sizes.length > 0 && !inCart.has(p.id));
     const below = totalsOf(selectedItems()).dop < minDop();
     if (below) pool = pool.slice().sort((a, b) => a.price - b.price);
     const picks = pool.slice(0, 8);

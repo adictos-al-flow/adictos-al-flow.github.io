@@ -113,7 +113,7 @@ function formatDop(value) {
 }
 
 function formatPrice(value) {
-  if (value === null) return "Precio por confirmar";
+  if (value === null) return "";
   const currency = CURRENCIES[currentCurrency];
   return currency.symbol + Math.round(value * rateOf(currentCurrency)).toLocaleString("en-US");
 }
@@ -203,7 +203,7 @@ function renderGrid() {
       <article class="card" style="animation-delay:${(i % 8) * 35}ms">
         <div class="card-img">
           <img src="${p.img[0]}" alt="${esc(p.name)}" width="650" height="650" loading="lazy" decoding="async">
-          ${p.price === null ? "" : '<span class="card-tag">Envío gratis</span>'}
+          ${p.price === null || p.sizes.length === 0 ? "" : '<span class="card-tag">Envío gratis</span>'}
           <button class="fav-btn${fav ? " active" : ""}" type="button" data-id="${esc(p.id)}" aria-pressed="${fav}" aria-label="Guardar en favoritos">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.4S4.8 15.9 3 11.7A5.2 5.2 0 0 1 12 6.4a5.2 5.2 0 0 1 9 5.3c-1.8 4.2-9 8.7-9 8.7z"/></svg>
           </button>
@@ -289,10 +289,12 @@ function openModal(id) {
   mName.textContent = product.name;
   mPrice.textContent = formatPrice(product.price);
   mDesc.textContent = product.desc;
-  modal.classList.toggle("preview", product.price === null);
-  addCartBtn.disabled = product.price === null;
-  document.getElementById("mNote").textContent = product.price === null
-    ? "Precio, tallas y disponibilidad por confirmar."
+  const unavailable = product.price === null || product.sizes.length === 0;
+  modal.classList.toggle("preview", unavailable);
+  addCartBtn.disabled = unavailable;
+  document.getElementById("addCartText").textContent = unavailable ? "No disponible para compra" : "Añadir al carrito";
+  document.getElementById("mNote").textContent = unavailable
+    ? "Tallas y disponibilidad por confirmar."
     : "Pedido mínimo de " + formatDop(minOrderDop()) + " · Envío gratis a República Dominicana";
 
   const mFav = document.getElementById("mFav");
@@ -339,7 +341,7 @@ function addToCart() {
 function renderHero() {
   const media = document.querySelector(".hero-media");
   const count = document.getElementById("heroCount");
-  if (count) count.textContent = PRODUCTS.filter((p) => p.price !== null).length;
+  if (count) count.textContent = PRODUCTS.filter((p) => p.price !== null && p.sizes.length > 0).length;
 
   if (!media) return;
   const picks = ["ropa", "zapatillas"].map((cat) => PRODUCTS.find((p) => p.cat === cat)).filter(Boolean);
